@@ -10,6 +10,7 @@ kotlin = "2.3.10"
 composeBom = "2026.02.01"
 truth = "1.4.4"
 mockk = "1.13.13"
+gradlePluginPublish = "2.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,4 +34,5 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradlePluginPublish" }
 

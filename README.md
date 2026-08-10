@@ -16,24 +16,28 @@ obfuscation is *actually effective* (sensitive classes are truly renamed), not j
 
 ## Installation
 
-The plugin is resolved from the local composite build (`gradle-plugin/`), already wired up via
-`includeBuild("gradle-plugin")` in this repo's `settings.gradle.kts`. In your module's
-`build.gradle.kts`:
+From the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.rezacah.ngaburake.obfuscation-verify)
+(once published), in your module's `build.gradle.kts`:
 
 ```kotlin
 plugins {
     id("com.android.application")
-    id("com.jalo.ngaburake.obfuscation-verify")
+    id("com.rezacah.ngaburake.obfuscation-verify") version "0.1.0"
 }
 ```
+
+**Development / local build:** if you're working inside this repo (or building the plugin from
+source without publishing), the plugin is already resolved from the local composite build
+(`gradle-plugin/`), wired up via `includeBuild("gradle-plugin")` in the root
+`settings.gradle.kts` — omit the `version` when applying it that way.
 
 ## Configuration
 
 ```kotlin
 obfuscationVerify {
     sensitivePackages.set(listOf(
-        "com.jalo.ngaburake.PaymentManager",
-        "com.jalo.ngaburake.ApiKeyStore",
+        "com.rezacah.ngaburake.PaymentManager",
+        "com.rezacah.ngaburake.ApiKeyStore",
     ))
     failOnViolation.set(true) // default: false (report only, doesn't fail the build)
 }
@@ -62,8 +66,8 @@ is automatically wired to run right after it — no extra configuration needed.
 Console format:
 
 ```
-[PASS] com.jalo.ngaburake.PaymentManager — renamed as expected
-[FAIL] com.jalo.ngaburake.ApiKeyStore — kept its original name — check for an overly broad -keep rule
+[PASS] com.rezacah.ngaburake.PaymentManager — renamed as expected
+[FAIL] com.rezacah.ngaburake.ApiKeyStore — kept its original name — check for an overly broad -keep rule
 ```
 
 JSON format (`reportFormat.set(ReportFormat.JSON)`):
@@ -71,13 +75,13 @@ JSON format (`reportFormat.set(ReportFormat.JSON)`):
 ```json
 [
   {
-    "target": "com.jalo.ngaburake.PaymentManager",
+    "target": "com.rezacah.ngaburake.PaymentManager",
     "type": "CLASS_NAME",
     "severity": "OK",
     "detail": "renamed as expected"
   },
   {
-    "target": "com.jalo.ngaburake.ApiKeyStore",
+    "target": "com.rezacah.ngaburake.ApiKeyStore",
     "type": "CLASS_NAME",
     "severity": "CRITICAL",
     "detail": "kept its original name — check for an overly broad -keep rule"
@@ -96,7 +100,7 @@ may inline or merge it away entirely so it never appears in the mapping file at 
 without a `-keep` rule. If that happens, use:
 
 ```proguard
--keep,allowobfuscation class com.jalo.ngaburake.YourSensitiveClass
+-keep,allowobfuscation class com.rezacah.ngaburake.YourSensitiveClass
 ```
 
 This keeps the class as a distinct, checkable type while still letting R8 rename it.
@@ -108,3 +112,7 @@ This keeps the class as a distinct, checkable type while still letting R8 rename
 - `./gradlew :gradle-plugin:test` — plugin unit + functional tests (Gradle TestKit)
 - `./gradlew connectedAndroidTest` — instrumented tests, needs a running emulator/device
 - `./gradlew assembleRelease` — exercises the ProGuard/R8 path
+
+## License
+
+[Apache License 2.0](LICENSE)

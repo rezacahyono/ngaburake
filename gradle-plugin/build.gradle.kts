@@ -1,6 +1,9 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     `java-gradle-plugin`
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.gradle.plugin.publish)
 }
 
 java {
@@ -15,11 +18,36 @@ kotlin {
     jvmToolchain(17)
 }
 
+// Plugin Portal requires a fixed (non-SNAPSHOT) version. Group must share the same top-level
+// namespace as the plugin ID below. Domain ownership (rezacah.com) is verified by the Portal
+// during the initial manual review — a fixed TXT record isn't known ahead of time, the
+// reviewer provides it by email when needed.
+group = "com.rezacah.ngaburake"
+version = "0.1.0"
+
 gradlePlugin {
+    website = "https://github.com/rezacahyono/ngaburake"
+    vcsUrl = "https://github.com/rezacahyono/ngaburake"
     plugins {
         create("obfuscationVerify") {
-            id = "com.jalo.ngaburake.obfuscation-verify"
-            implementationClass = "com.jalo.ngaburake.plugin.ObfuscationPlugin"
+            id = "com.rezacah.ngaburake.obfuscation-verify"
+            implementationClass = "com.rezacah.ngaburake.plugin.ObfuscationPlugin"
+            displayName = "Obfuscation Verify"
+            description = "Verifies that ProGuard/R8 obfuscation actually renamed configured " +
+                "sensitive classes, not just that minification is enabled. Parses the R8 " +
+                "mapping.txt, checks a developer-declared list of sensitive classes, and " +
+                "generates a console/JSON report — optionally failing the build as a CI " +
+                "security gate."
+            tags = listOf("proguard", "r8", "obfuscation", "security", "android")
+
+            // Declared per Plugin Portal policy (v2.1.0+) — task inputs/outputs are all
+            // annotated (@Input/@InputFile/@OutputDirectory) with no unmanaged mutable state,
+            // so Configuration Cache is supported.
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

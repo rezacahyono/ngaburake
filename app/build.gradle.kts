@@ -1,17 +1,17 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    id("com.jalo.ngaburake.obfuscation-verify")
+    id("com.rezacah.ngaburake.obfuscation-verify")
 }
 
 android {
-    namespace = "com.jalo.ngaburake"
+    namespace = "com.rezacah.ngaburake"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.jalo.ngaburake"
+        applicationId = "com.rezacah.ngaburake"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -59,8 +59,8 @@ dependencies {
 obfuscationVerify {
     sensitivePackages.set(
         listOf(
-            "com.jalo.ngaburake.PaymentManager",
-            "com.jalo.ngaburake.ApiKeyStore",
+            "com.rezacah.ngaburake.PaymentManager",
+            "com.rezacah.ngaburake.ApiKeyStore",
         ),
     )
     failOnViolation.set(true)

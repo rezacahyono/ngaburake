@@ -1,4 +1,4 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

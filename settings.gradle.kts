@@ -25,4 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ngaburake"
 include(":app")
-include(":report")
+includeBuild("report")

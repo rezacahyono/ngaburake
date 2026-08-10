@@ -1,4 +1,4 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 /** Output format for a generated report. */
 enum class ReportFormat {

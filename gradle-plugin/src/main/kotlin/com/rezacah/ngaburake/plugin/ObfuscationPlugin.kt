@@ -1,5 +1,6 @@
 package com.rezacah.ngaburake.plugin
 
+import com.rezacah.ngaburake.report.ReportFormat
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 

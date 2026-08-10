@@ -1,4 +1,4 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 /**
  * Renders findings as a minimal JSON array, schema: `target`, `type`, `severity`, `detail` per

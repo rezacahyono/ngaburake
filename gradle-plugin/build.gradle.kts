@@ -53,6 +53,7 @@ gradlePlugin {
 }
 
 dependencies {
+    implementation("com.rezacah.ngaburake:report:0.1.0")
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.mockk)

@@ -1,4 +1,4 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 /** Renders findings as a short pass/fail line per class, for Gradle console output. */
 internal class ConsoleReportFormatter : ReportFormatter {

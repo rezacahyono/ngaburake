@@ -1,9 +1,9 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 /**
  * How serious a single obfuscation [Finding] is.
  */
-internal enum class Severity {
+enum class Severity {
     /** Class is verified obfuscated, no action needed. */
     OK,
 

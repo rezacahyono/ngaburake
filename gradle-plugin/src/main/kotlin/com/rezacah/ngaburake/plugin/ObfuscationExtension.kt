@@ -1,5 +1,6 @@
 package com.rezacah.ngaburake.plugin
 
+import com.rezacah.ngaburake.report.ReportFormat
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property

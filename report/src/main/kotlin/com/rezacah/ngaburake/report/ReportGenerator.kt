@@ -1,4 +1,4 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 /**
  * Single convergence point for turning a list of [Finding]s into an output string.
@@ -6,7 +6,7 @@ package com.rezacah.ngaburake.plugin
  * Picks a [ReportFormatter] based on [format] (Factory pattern) — adding a new output format
  * later means adding a new [ReportFormatter] implementation, not changing callers.
  */
-internal object ReportGenerator {
+object ReportGenerator {
     fun generate(findings: List<Finding>, format: ReportFormat): String {
         val formatter: ReportFormatter = when (format) {
             ReportFormat.CONSOLE -> ConsoleReportFormatter()

@@ -1,7 +1,7 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.report
 
 /** What kind of target a [Finding] refers to. */
-internal enum class FindingType {
+enum class FindingType {
     CLASS_NAME,
     FIELD_NAME,
     METHOD_NAME,

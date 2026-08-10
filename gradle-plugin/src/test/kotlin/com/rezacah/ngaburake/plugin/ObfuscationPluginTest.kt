@@ -1,5 +1,6 @@
 package com.rezacah.ngaburake.plugin
 
+import com.rezacah.ngaburake.report.ReportFormat
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

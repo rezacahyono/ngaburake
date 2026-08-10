@@ -4,12 +4,15 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 kotlin {
-    jvmToolchain(11)
+    // Gradle's own API (used by ProjectBuilder in tests) requires JVM 17+ to run — this is
+    // build-time tooling, not Android runtime bytecode, so there's no minSdk-driven reason to
+    // target 11 here like the `app`/`report` modules do.
+    jvmToolchain(17)
 }
 
 gradlePlugin {
@@ -23,4 +26,5 @@ gradlePlugin {
 
 dependencies {
     testImplementation(libs.junit)
+    testImplementation(gradleTestKit())
 }

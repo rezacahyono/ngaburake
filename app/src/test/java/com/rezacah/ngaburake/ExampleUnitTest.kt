@@ -1,4 +1,4 @@
-package com.jalo.ngaburake
+package com.rezacah.ngaburake
 
 import org.junit.Test
 

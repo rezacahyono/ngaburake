@@ -1,4 +1,4 @@
-package com.jalo.ngaburake.ui.theme
+package com.rezacah.ngaburake.ui.theme
 
 import android.app.Activity
 import android.os.Build

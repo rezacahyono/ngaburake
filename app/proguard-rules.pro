@@ -19,3 +19,20 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Dogfooding fixtures (docs/PLAN.md Phase 6) for the ngaburake obfuscation-verify plugin itself.
+#
+# PaymentManager is trivial enough (one constructor, one method, one call site) that R8
+# inlines/merges it away entirely without a keep rule, so it would never appear in mapping.txt
+# at all. allowobfuscation keeps the class as a distinct, checkable entity while still letting
+# R8 rename it — this is also the realistic rule shape a security team would use for a
+# sensitive class that must survive as its own type but should still be obfuscated.
+-keep,allowobfuscation class com.jalo.ngaburake.PaymentManager
+
+# Same allowobfuscation treatment as PaymentManager above — keeps ApiKeyStore checkable as its
+# own type instead of being inlined away, while still letting R8 rename it.
+#
+# An earlier, deliberately overly broad `-keep class com.jalo.ngaburake.ApiKeyStore { *; }` rule
+# was used here to manually validate that verifyObfuscation catches this exact violation (see
+# docs/PLAN.md Phase 6); it has been removed after that validation so this build stays green.
+-keep,allowobfuscation class com.jalo.ngaburake.ApiKeyStore

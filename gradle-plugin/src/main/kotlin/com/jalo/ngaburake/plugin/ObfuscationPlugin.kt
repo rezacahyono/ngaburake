@@ -38,9 +38,17 @@ class ObfuscationPlugin : Plugin<Project> {
             task.outputDir.set(extension.outputDir)
         }
 
-        // Defensive: only wire up to an R8 minify task if one exists — AGP may not be applied,
-        // and the task name varies by variant (minify<Variant>WithR8).
-        project.tasks.matching { it.name.startsWith("minify") && it.name.endsWith("WithR8") }
-            .configureEach { minifyTask -> minifyTask.finalizedBy(verifyTask) }
+        // Defensive: only wire up to R8/mapping-producing tasks if they exist — AGP may not be
+        // applied, and task names vary by variant (minify<Variant>WithR8,
+        // merge<Variant>ComposeMapping also rewrites mapping.txt when Compose is used).
+        // mustRunAfter (not just finalizedBy) is required so Gradle's task validation
+        // recognizes verifyObfuscation reads a file those tasks produce.
+        project.tasks.matching {
+            (it.name.startsWith("minify") && it.name.endsWith("WithR8")) ||
+                (it.name.startsWith("merge") && it.name.endsWith("ComposeMapping"))
+        }.configureEach { mappingProducerTask ->
+            mappingProducerTask.finalizedBy(verifyTask)
+            verifyTask.get().mustRunAfter(mappingProducerTask)
+        }
     }
 }

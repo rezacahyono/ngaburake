@@ -17,6 +17,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Dogfooding fixture (docs/PLAN.md Phase 6) — println (not Log.d: proguard-android
+        // -optimize.txt has -assumenosideeffects on android.util.Log, which would let R8 strip
+        // these calls and the classes entirely) with a non-constant runtime value so R8 can't
+        // constant-fold the call either. Both classes must still appear as headers in
+        // mapping.txt.
+        val nonConstant = System.currentTimeMillis().toDouble()
+        println("payment ok=${PaymentManager().processPayment(nonConstant)}")
+        println("apiKey=${ApiKeyStore().getApiKey()}")
         setContent {
             NgaburakeTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

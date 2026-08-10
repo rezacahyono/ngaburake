@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.jalo.ngaburake.obfuscation-verify")
 }
 
 android {
@@ -21,7 +22,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -53,4 +54,14 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+obfuscationVerify {
+    sensitivePackages.set(
+        listOf(
+            "com.jalo.ngaburake.PaymentManager",
+            "com.jalo.ngaburake.ApiKeyStore",
+        ),
+    )
+    failOnViolation.set(true)
 }

@@ -28,12 +28,7 @@ abstract class ObfuscationExtension {
      */
     abstract val failOnViolation: Property<Boolean>
 
-    /**
-     * Output format for the generated report. Defaults to [ReportFormat.CONSOLE].
-     *
-     * @throws IllegalStateException at task execution time if set to [ReportFormat.HTML] —
-     *   that format is not implemented yet (planned for v1.1).
-     */
+    /** Output format for the generated report. Defaults to [ReportFormat.CONSOLE]. */
     abstract val reportFormat: Property<ReportFormat>
 
     /** Directory where the report file is written. Defaults to `build/reports/obfuscation`. */

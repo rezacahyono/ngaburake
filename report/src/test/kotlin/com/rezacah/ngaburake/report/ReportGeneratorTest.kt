@@ -22,7 +22,7 @@ class ReportGeneratorTest {
     )
 
     @Test
-    fun `console format berisi satu baris pass-fail per finding`() {
+    fun `console format contains one pass-fail line per finding`() {
         val output = ReportGenerator.generate(findings, ReportFormat.CONSOLE)
 
         assertTrue(output.contains("[FAIL] com.rezacah.ngaburake.PaymentManager"))
@@ -30,14 +30,14 @@ class ReportGeneratorTest {
     }
 
     @Test
-    fun `console format untuk list kosong menampilkan pesan info`() {
+    fun `console format for empty list shows an info message`() {
         val output = ReportGenerator.generate(emptyList(), ReportFormat.CONSOLE)
 
         assertEquals("No sensitive classes configured.", output)
     }
 
     @Test
-    fun `json format berisi schema minimal target type severity detail`() {
+    fun `json format contains the minimal target type severity detail schema`() {
         val output = ReportGenerator.generate(findings, ReportFormat.JSON)
 
         assertTrue(output.contains("\"target\": \"com.rezacah.ngaburake.PaymentManager\""))
@@ -47,7 +47,7 @@ class ReportGeneratorTest {
     }
 
     @Test
-    fun `json format meng-escape tanda kutip di detail`() {
+    fun `json format escapes quotes in detail`() {
         val finding = Finding(
             target = "com.rezacah.ngaburake.Foo",
             type = FindingType.CLASS_NAME,
@@ -60,8 +60,29 @@ class ReportGeneratorTest {
         assertTrue(output.contains("""contains \"quotes\""""))
     }
 
-    @Test(expected = IllegalStateException::class)
-    fun `html format belum diimplementasi, throw error jelas`() {
-        ReportGenerator.generate(findings, ReportFormat.HTML)
+    @Test
+    fun `html format produces a table with all findings`() {
+        val output = ReportGenerator.generate(findings, ReportFormat.HTML)
+
+        assertTrue(output.contains("<table>"))
+        assertTrue(output.contains("com.rezacah.ngaburake.PaymentManager"))
+        assertTrue(output.contains("com.rezacah.ngaburake.ApiKeyStore"))
+        assertTrue(output.contains("class=\"critical\""))
+        assertTrue(output.contains("class=\"ok\""))
+    }
+
+    @Test
+    fun `html format escapes special html characters`() {
+        val finding = Finding(
+            target = "com.rezacah.ngaburake.Foo",
+            type = FindingType.CLASS_NAME,
+            severity = Severity.WARNING,
+            detail = "contains <script>alert(1)</script>",
+        )
+
+        val output = ReportGenerator.generate(listOf(finding), ReportFormat.HTML)
+
+        assertTrue(output.contains("&lt;script&gt;"))
+        assertTrue(!output.contains("<script>alert"))
     }
 }

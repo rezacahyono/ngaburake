@@ -1,7 +1,7 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.mapping
 
 /** In-memory, queryable index over the class headers parsed from an R8 `mapping.txt` file. */
-internal class MappingIndex(private val entries: List<MappingEntry>) {
+class MappingIndex(private val entries: List<MappingEntry>) {
 
     private val byOriginalName: Map<String, MappingEntry> = entries.associateBy { it.original }
 

@@ -26,13 +26,13 @@ mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
 
-    coordinates("com.rezacah.ngaburake", "report", version.toString())
+    coordinates("com.rezacah.ngaburake", "mapping", version.toString())
 
     pom {
-        name.set("ngaburake report")
+        name.set("ngaburake mapping")
         description.set(
-            "Report generation model and formatters (Console/JSON/HTML) for the ngaburake " +
-                "obfuscation verification SDK.",
+            "R8/ProGuard mapping.txt parser and query index for the ngaburake obfuscation " +
+                "verification SDK.",
         )
         url.set("https://github.com/rezacahyono/ngaburake")
         licenses {

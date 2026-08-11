@@ -11,7 +11,7 @@ object ReportGenerator {
         val formatter: ReportFormatter = when (format) {
             ReportFormat.CONSOLE -> ConsoleReportFormatter()
             ReportFormat.JSON -> JsonReportFormatter()
-            ReportFormat.HTML -> error("HTML report format is not implemented yet (planned for v1.1).")
+            ReportFormat.HTML -> HtmlReportFormatter()
         }
         return formatter.format(findings)
     }

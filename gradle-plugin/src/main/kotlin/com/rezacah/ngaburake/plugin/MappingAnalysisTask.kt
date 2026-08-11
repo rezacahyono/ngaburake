@@ -1,5 +1,7 @@
 package com.rezacah.ngaburake.plugin
 
+import com.rezacah.ngaburake.mapping.MappingParser
+import com.rezacah.ngaburake.mapping.ObfuscationCheckResult
 import com.rezacah.ngaburake.report.Finding
 import com.rezacah.ngaburake.report.FindingType
 import com.rezacah.ngaburake.report.ReportFormat

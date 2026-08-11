@@ -1,7 +1,7 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.mapping
 
 /** Outcome of checking a single class name against a [MappingIndex]. */
-internal sealed interface ObfuscationCheckResult {
+sealed interface ObfuscationCheckResult {
     /** Class was found in the mapping and its name was actually renamed. */
     data object Obfuscated : ObfuscationCheckResult
 

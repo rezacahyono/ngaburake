@@ -5,10 +5,7 @@ enum class ReportFormat {
     /** Minimal JSON array, schema: `target`, `type`, `severity`, `detail` per entry. */
     JSON,
 
-    /**
-     * Not implemented yet — planned for v1.1. Selecting this format causes `verifyObfuscation`
-     * to throw an [IllegalStateException] at execution time.
-     */
+    /** Standalone HTML page with a color-coded table, one row per finding. */
     HTML,
 
     /** Short pass/fail line per class, printed to the Gradle console log. */

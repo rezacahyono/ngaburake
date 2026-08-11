@@ -1,7 +1,4 @@
-rootProject.name = "gradle-plugin"
-
-includeBuild("../report")
-includeBuild("../mapping")
+rootProject.name = "mapping"
 
 pluginManagement {
     repositories {

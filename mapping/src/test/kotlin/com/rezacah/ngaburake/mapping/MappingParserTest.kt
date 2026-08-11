@@ -1,4 +1,4 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.mapping
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -10,7 +10,7 @@ class MappingParserTest {
         File.createTempFile("mapping", ".txt").apply { writeText(content) }
 
     @Test
-    fun `class yang ter-obfuscate terdeteksi sebagai Obfuscated`() {
+    fun `obfuscated class is detected as Obfuscated`() {
         val file = mappingFile(
             """
             com.rezacah.ngaburake.PaymentManager -> a.b.c:
@@ -27,7 +27,7 @@ class MappingParserTest {
     }
 
     @Test
-    fun `class yang tidak ter-obfuscate karena keep rule terdeteksi sebagai NotObfuscated`() {
+    fun `class kept by a keep rule is detected as NotObfuscated`() {
         val file = mappingFile(
             """
             com.rezacah.ngaburake.PaymentManager -> com.rezacah.ngaburake.PaymentManager:
@@ -43,7 +43,7 @@ class MappingParserTest {
     }
 
     @Test
-    fun `class yang tidak ada di mapping terdeteksi sebagai NotFoundInMapping`() {
+    fun `class absent from mapping is detected as NotFoundInMapping`() {
         val file = mappingFile(
             """
             com.rezacah.ngaburake.OtherClass -> a:
@@ -59,7 +59,7 @@ class MappingParserTest {
     }
 
     @Test
-    fun `baris member berindentasi tidak dianggap header class baru`() {
+    fun `indented member line is not treated as a new class header`() {
         val file = mappingFile(
             """
             com.rezacah.ngaburake.PaymentManager -> a:

@@ -1,9 +1,9 @@
-package com.rezacah.ngaburake.plugin
+package com.rezacah.ngaburake.mapping
 
 import java.io.File
 
 /** Parses R8/ProGuard `mapping.txt` files into a queryable [MappingIndex]. */
-internal object MappingParser {
+object MappingParser {
 
     /**
      * Reads [mappingFile] and indexes every class header line (`original -> obfuscated:`).

@@ -25,4 +25,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "ngaburake"
 include(":app")
+include(":runtime")
+include(":testing")
 includeBuild("report")
+includeBuild("mapping")

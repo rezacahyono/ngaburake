@@ -7,17 +7,19 @@ obfuscation is *actually effective* (sensitive classes are truly renamed), not j
 
 - [x] Gradle plugin (`verifyObfuscation` task)
 - [x] R8 `mapping.txt` parsing
-- [x] Console / JSON report
+- [x] Console / JSON / HTML report
 - [x] Fail-on-violation build gate
-- [ ] Runtime reflection check (in-app, CI/QA) — planned v1.1
-- [ ] HTML report format — planned v1.1
+- [x] Runtime SDK (`ObfuscationSDK`) — class name + reflection field/method check
+- [x] Consumer testing fake (`FakeObfuscationChecker`)
 - [ ] SARIF export (CI code scanning) — planned v1.2
 - [ ] Historical trend dashboard — exploratory, not yet designed
 
 ## Installation
 
-From the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.rezacah.ngaburake.obfuscation-verify)
-(once published), in your module's `build.gradle.kts`:
+### Gradle Plugin
+
+From the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.rezacah.ngaburake.obfuscation-verify),
+in your module's `build.gradle.kts`:
 
 ```kotlin
 plugins {
@@ -30,6 +32,28 @@ plugins {
 source without publishing), the plugin is already resolved from the local composite build
 (`gradle-plugin/`), wired up via `includeBuild("gradle-plugin")` in the root
 `settings.gradle.kts` — omit the `version` when applying it that way.
+
+### Runtime SDK
+
+From [Maven Central](https://central.sonatype.com/artifact/com.rezacah.ngaburake/runtime), in
+your module's `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("com.rezacah.ngaburake:runtime:0.1.0")
+}
+```
+
+`com.rezacah.ngaburake:report` is pulled in automatically as a transitive dependency — types like
+`Finding` and `ReportFormat` are part of the runtime SDK's public API, so they need to be
+available at compile time. `com.rezacah.ngaburake:mapping` is also pulled in transitively but
+stays an implementation detail you never reference directly.
+
+For consumer unit tests, add the fake checker:
+
+```kotlin
+testImplementation("com.rezacah.ngaburake:testing:0.1.0")
+```
 
 ## Configuration
 
@@ -47,7 +71,7 @@ obfuscationVerify {
 |---|---|---|
 | `sensitivePackages` | `[]` | Fully qualified class names that must appear renamed in the R8 mapping file. |
 | `failOnViolation` | `false` | Fail the build when a class was found in the mapping but kept its original name. |
-| `reportFormat` | `ReportFormat.CONSOLE` | `CONSOLE` or `JSON`. `HTML` is not implemented yet (throws at task execution time). |
+| `reportFormat` | `ReportFormat.CONSOLE` | `CONSOLE`, `JSON`, or `HTML`. |
 | `outputDir` | `build/reports/obfuscation` | Directory where the report file is written. |
 
 ## Usage
@@ -93,6 +117,9 @@ A class that isn't found in the mapping file at all (typo, or stripped entirely 
 reported as `WARNING`, not `CRITICAL` — it's not verified, but it's not a confirmed violation
 either.
 
+HTML format (`reportFormat.set(ReportFormat.HTML)`) renders a standalone page with a color-coded
+table — one row per finding, `ok`/`warning`/`critical` CSS classes for styling.
+
 ## A note on trivial classes
 
 If a sensitive class is small enough (one constructor, one trivial method, one call site), R8
@@ -105,11 +132,58 @@ without a `-keep` rule. If that happens, use:
 
 This keeps the class as a distinct, checkable type while still letting R8 rename it.
 
+## Runtime SDK
+
+`ObfuscationSDK` runs the same kind of checks as the Gradle plugin, but in-app at runtime
+(embedded in a CI/QA build, or invoked on demand) instead of at build time against `mapping.txt`.
+
+```kotlin
+import com.rezacah.ngaburake.runtime.ObfuscationSDK
+import com.rezacah.ngaburake.report.ReportFormat
+
+class MyQaBuildCheck {
+    suspend fun runCheck() {
+        val sdk = ObfuscationSDK.Builder()
+            .addSensitivePackage("com.myapp.PaymentManager")
+            .addSensitivePackage("com.myapp.ApiKeyStore")
+            // Optional: cross-check against a real mapping.txt if you bundle one
+            // (e.g. as an asset in a dedicated CI/QA build variant).
+            // .withMappingFile(File(context.filesDir, "mapping.txt"))
+            .build()
+
+        val result = sdk.verify()
+        val report = sdk.generateReport(result, ReportFormat.JSON)
+
+        if (!result.isObfuscated) {
+            // handle: log to crash reporting, fail a CI/QA gate, etc.
+        }
+    }
+}
+```
+
+Two checkers run for every configured class:
+- **`ClassNameChecker`** — reflection heuristic (`Class.forName(...).simpleName` length/shape), or
+  an exact cross-check against a supplied mapping file if `withMappingFile(...)` was used.
+- **`ReflectionChecker`** — scans declared fields/methods for sensitive keywords (`apiKey`,
+  `secret`, `token`, `password` by default) that could leak information even if the class itself
+  was renamed.
+
+Notes:
+- `verify()` is a `suspend fun` — call it from a coroutine scope, don't call it blockingly from
+  `Dispatchers.Main`.
+- `withMappingFile(file)` is optional. Without it, the SDK relies solely on the reflection
+  heuristic — still useful, but less accurate than a real mapping-file cross-check.
+- `mapping.txt` is a build artifact — it isn't bundled into the APK automatically. If you want to
+  use `withMappingFile()`, you're responsible for packaging it yourself.
+- For unit testing your own code that calls into the SDK, use `FakeObfuscationChecker` from
+  `com.rezacah.ngaburake:testing` — it returns deterministic results without real reflection.
+
 ## Development
 
 - `./gradlew build` — build everything
 - `./gradlew test` — unit tests (JVM)
 - `./gradlew :gradle-plugin:test` — plugin unit + functional tests (Gradle TestKit)
+- `./gradlew :runtime:test :mapping:test :report:test :testing:test` — SDK module unit tests
 - `./gradlew connectedAndroidTest` — instrumented tests, needs a running emulator/device
 - `./gradlew assembleRelease` — exercises the ProGuard/R8 path
 

@@ -1,5 +1,6 @@
 package com.rezacah.ngaburake.plugin
 
+import com.rezacah.ngaburake.report.ReportFormat
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -9,7 +10,7 @@ import org.junit.Test
 class ObfuscationPluginTest {
 
     @Test
-    fun `apply plugin mendaftarkan extension obfuscationVerify`() {
+    fun `apply plugin registers the obfuscationVerify extension`() {
         val project = ProjectBuilder.builder().build()
 
         project.pluginManager.apply(ObfuscationPlugin::class.java)
@@ -20,7 +21,7 @@ class ObfuscationPluginTest {
     }
 
     @Test
-    fun `apply plugin mendaftarkan task verifyObfuscation`() {
+    fun `apply plugin registers the verifyObfuscation task`() {
         val project = ProjectBuilder.builder().build()
 
         project.pluginManager.apply(ObfuscationPlugin::class.java)
@@ -31,7 +32,7 @@ class ObfuscationPluginTest {
     }
 
     @Test
-    fun `extension default value sesuai convention`() {
+    fun `extension default values match the configured convention`() {
         val project = ProjectBuilder.builder().build()
         project.pluginManager.apply(ObfuscationPlugin::class.java)
 
@@ -42,11 +43,11 @@ class ObfuscationPluginTest {
     }
 
     @Test
-    fun `apply plugin tidak error walau AGP belum di-apply`() {
+    fun `apply plugin does not error even when AGP has not been applied`() {
         val project = ProjectBuilder.builder().build()
 
-        // Tidak ada task minify*WithR8 sama sekali karena AGP tidak di-apply — plugin harus
-        // tetap berhasil apply tanpa UnknownTaskException.
+        // No minify*WithR8 task exists at all because AGP isn't applied — the plugin must
+        // still apply successfully without an UnknownTaskException.
         project.pluginManager.apply(ObfuscationPlugin::class.java)
 
         assertNotNull(project.tasks.findByName("verifyObfuscation"))

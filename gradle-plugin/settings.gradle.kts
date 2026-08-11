@@ -1,5 +1,8 @@
 rootProject.name = "gradle-plugin"
 
+includeBuild("../report")
+includeBuild("../mapping")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()

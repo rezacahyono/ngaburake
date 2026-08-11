@@ -1,5 +1,12 @@
 package com.rezacah.ngaburake.plugin
 
+import com.rezacah.ngaburake.mapping.MappingParser
+import com.rezacah.ngaburake.mapping.ObfuscationCheckResult
+import com.rezacah.ngaburake.report.Finding
+import com.rezacah.ngaburake.report.FindingType
+import com.rezacah.ngaburake.report.ReportFormat
+import com.rezacah.ngaburake.report.ReportGenerator
+import com.rezacah.ngaburake.report.Severity
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty

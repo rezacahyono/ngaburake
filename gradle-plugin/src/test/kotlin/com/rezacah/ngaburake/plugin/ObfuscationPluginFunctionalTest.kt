@@ -49,7 +49,7 @@ class ObfuscationPluginFunctionalTest {
             .withArguments(*args, "--stacktrace")
 
     @Test
-    fun `class ter-obfuscate menghasilkan build SUCCESS dan report ditulis ke disk`() {
+    fun `obfuscated class produces a SUCCESS build and writes a report to disk`() {
         writeSettings()
         writeBuildScript(
             """
@@ -69,7 +69,7 @@ class ObfuscationPluginFunctionalTest {
     }
 
     @Test
-    fun `class tidak ter-obfuscate dengan failOnViolation true membuat build FAILED`() {
+    fun `non-obfuscated class with failOnViolation true makes the build FAILED`() {
         writeSettings()
         writeBuildScript(
             """
@@ -88,7 +88,7 @@ class ObfuscationPluginFunctionalTest {
     }
 
     @Test
-    fun `class tidak ter-obfuscate dengan failOnViolation default false tetap build SUCCESS tapi report tandai FAIL`() {
+    fun `non-obfuscated class with default failOnViolation false still builds SUCCESS but report marks FAIL`() {
         writeSettings()
         writeBuildScript(
             """

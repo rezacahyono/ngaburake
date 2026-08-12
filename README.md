@@ -1,7 +1,14 @@
 # ngaburake
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.rezacah.ngaburake/runtime)](https://central.sonatype.com/artifact/com.rezacah.ngaburake/runtime)
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fplugins.gradle.org%2Fm2%2Fcom%2Frezacah%2Fngaburake%2Fobfuscation-verify%2Fcom.rezacah.ngaburake.obfuscation-verify.gradle.plugin%2Fmaven-metadata.xml&label=Gradle%20Plugin)](https://plugins.gradle.org/plugin/com.rezacah.ngaburake.obfuscation-verify)
+[![License](https://img.shields.io/github/license/rezacahyono/ngaburake)](LICENSE)
+
 Code Obfuscation Verification & Reporting SDK for Android — verifies that ProGuard/R8
 obfuscation is *actually effective* (sensitive classes are truly renamed), not just enabled.
+
+See the [Changelog](CHANGELOG.md) for release history and [Published packages](#published-packages)
+for what's available where.
 
 ## Status
 
@@ -74,7 +81,7 @@ your module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.rezacah.ngaburake:runtime:0.1.0")
+    implementation("com.rezacah.ngaburake:runtime:0.1.1")
 }
 ```
 
@@ -88,6 +95,19 @@ For consumer unit tests, add the fake checker:
 ```kotlin
 testImplementation("com.rezacah.ngaburake:testing:0.1.0")
 ```
+
+## Published packages
+
+| Package | Version | Registry | Purpose |
+|---|---|---|---|
+| `com.rezacah.ngaburake.obfuscation-verify` | [0.1.0](https://plugins.gradle.org/plugin/com.rezacah.ngaburake.obfuscation-verify) | [Gradle Plugin Portal](https://plugins.gradle.org) | Build-time `verifyObfuscation` task |
+| [`com.rezacah.ngaburake:runtime`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/runtime) | 0.1.1 | Maven Central | In-app `ObfuscationSDK` |
+| [`com.rezacah.ngaburake:report`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/report) | 0.1.0 | Maven Central | Console/JSON/HTML report generation |
+| [`com.rezacah.ngaburake:mapping`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/mapping) | 0.1.0 | Maven Central | R8 `mapping.txt` parser |
+| [`com.rezacah.ngaburake:testing`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/testing) | 0.1.0 | Maven Central | `FakeObfuscationChecker` test fake |
+
+`report`, `mapping`, and `testing` come in transitively through `runtime` (or are used directly
+when needed). Latest versions are always shown by the badges at the top of this file.
 
 ## Configuration
 

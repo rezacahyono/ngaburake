@@ -58,6 +58,6 @@ class ReflectionChecker(
         sensitiveKeywords.any { keyword -> memberName.contains(keyword, ignoreCase = true) }
 
     companion object {
-        private val DEFAULT_KEYWORDS = listOf("apiKey", "secret", "token", "password")
+        internal val DEFAULT_KEYWORDS = listOf("apiKey", "secret", "token", "password")
     }
 }

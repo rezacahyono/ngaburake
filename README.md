@@ -14,6 +14,40 @@ obfuscation is *actually effective* (sensitive classes are truly renamed), not j
 - [ ] SARIF export (CI code scanning) — planned v1.2
 - [ ] Historical trend dashboard — exploratory, not yet designed
 
+## Use cases
+
+**CI security gate on every release build.** Apply the Gradle plugin, list your sensitive
+classes, set `failOnViolation.set(true)`. `verifyObfuscation` runs right after R8 and fails the
+build the moment a class you expect renamed (e.g. `PaymentManager`, `ApiKeyStore`) still has its
+original name — usually caused by an overly broad `-keep` rule someone added without noticing the
+blast radius. See [Configuration](#configuration).
+
+**Runtime self-check in a CI/QA build.** Some issues (reflection-based leaks, member names) only
+show up against the actual running app. Embed `ObfuscationSDK.verify()` in a dedicated QA build
+variant to double-check obfuscation on-device instead of trusting `mapping.txt` alone. See
+[Runtime SDK](#runtime-sdk).
+
+**Catching leaks that survive class renaming.** A class can be renamed and still leak — e.g.
+`ApiKeyStore` gets renamed to `bb`, but a `-keepclassmembers` rule (added for reflection/Gson)
+keeps `getApiKey()` unobfuscated. `ClassNameChecker` alone would report `OK`; `ReflectionChecker`
+catches it as `CRITICAL METHOD_NAME`. Run both (the SDK does, by default) rather than relying on
+class-name checks alone.
+
+**Auditing legacy `-keep` rules without breaking the build.** Point `sensitivePackages` at classes
+you suspect are covered by an old, overly broad `-keep` rule, but leave `failOnViolation` at its
+default `false`. The report flags every violation without failing CI — audit first, then flip
+`failOnViolation.set(true)` once the rules are cleaned up.
+
+**Unit testing code that calls into the SDK.** Don't want real reflection running in every unit
+test. Depend on `com.rezacah.ngaburake:testing` and use `FakeObfuscationChecker` to get
+deterministic `ObfuscationResult`s for your own logic (e.g. "does my code correctly block login
+when `result.isObfuscated` is false"), without needing a minified build to test against.
+
+**Cross-checking a claim against real R8 output, not a guess.** The reflection heuristic alone
+(class name length/shape) is a decent signal but not proof. Bundle the real `mapping.txt` as an
+asset (see `copyReleaseMappingToAssets` in [Sample app](#sample-app)) and pass it via
+`withMappingFile()` for an exact cross-check instead of a heuristic.
+
 ## Installation
 
 ### Gradle Plugin
@@ -173,10 +207,40 @@ Notes:
   `Dispatchers.Main`.
 - `withMappingFile(file)` is optional. Without it, the SDK relies solely on the reflection
   heuristic — still useful, but less accurate than a real mapping-file cross-check.
-- `mapping.txt` is a build artifact — it isn't bundled into the APK automatically. If you want to
-  use `withMappingFile()`, you're responsible for packaging it yourself.
+- `mapping.txt` is a build artifact, not something Gradle bundles into the APK by default — you're
+  responsible for copying it into `assets/` yourself. See the `:app` module's
+  `copyReleaseMappingToAssets` task for a working example: a `Copy` task ordered via
+  `mustRunAfter`/`finalizedBy` to run strictly after `minify*WithR8`/`merge*ComposeMapping` and
+  strictly before `mergeReleaseAssets`, so the same build that produces `mapping.txt` is the one
+  that embeds it — no stale-by-one-build lag.
 - For unit testing your own code that calls into the SDK, use `FakeObfuscationChecker` from
   `com.rezacah.ngaburake:testing` — it returns deterministic results without real reflection.
+
+## Sample app
+
+The `:app` module doubles as a live sample that demonstrates the whole SDK:
+
+**Build-time (Gradle plugin)**
+- `./gradlew :app:assembleRelease` runs `verifyObfuscation` automatically after R8. The report
+  lands in `app/build/reports/obfuscation-sample/`.
+- Switch report format: `-Pobfuscation.reportFormat={CONSOLE|JSON|HTML}` (default `HTML`).
+- Demo the CI security gate: `-Pobfuscation.failOnViolation=true` fails the build because
+  `LegacyAuthManager` is deliberately kept by a broad `-keep` rule (default is `false`, so the
+  build stays green while the report still flags it).
+
+**Runtime (`ObfuscationSDK`) — the app's own screen**
+- Runs `ObfuscationSDK.verify()` on demand (no startup cost), against the sample's fixture
+  classes: `PaymentManager` (obfuscated → OK), `ApiKeyStore` (member `getApiKey` leaks →
+  CRITICAL, METHOD_NAME), `TokenStore` (field `secretToken` leaks → CRITICAL, FIELD_NAME),
+  `LegacyAuthManager` (kept name → CRITICAL, CLASS_NAME), and a typo class (`DoesNotExist` →
+  WARNING).
+- Toggle **mapping cross-check** — real R8 `mapping.txt` is copied into
+  `app/src/main/assets/mapping.txt` by the `copyReleaseMappingToAssets` task (ordered strictly
+  after minify/compose-mapping, strictly before asset merge) and passed via `withMappingFile()` —
+  current after a single `./gradlew :app:assembleRelease`.
+- Toggle **custom keywords** — `withSensitiveKeywords(listOf("legacy"))` replaces the defaults.
+- Add/remove sensitive classes at runtime (shows `addSensitivePackage()` is dynamic).
+- Render the report in **all three formats** (Console / JSON / HTML) via `generateReport()`.
 
 ## Development
 
@@ -184,7 +248,9 @@ Notes:
 - `./gradlew test` — unit tests (JVM)
 - `./gradlew :gradle-plugin:test` — plugin unit + functional tests (Gradle TestKit)
 - `./gradlew :runtime:test :mapping:test :report:test :testing:test` — SDK module unit tests
-- `./gradlew connectedAndroidTest` — instrumented tests, needs a running emulator/device
+- `./gradlew :app:testDebugUnitTest` — sample app unit tests (ViewModel + `FakeObfuscationChecker`)
+- `./gradlew connectedAndroidTest` — instrumented tests (incl. a real `ObfuscationSDK.verify()`
+  on device), needs a running emulator/device
 - `./gradlew assembleRelease` — exercises the ProGuard/R8 path
 
 ## License

@@ -29,12 +29,26 @@
 # at all. allowobfuscation keeps the class as a distinct, checkable entity while still letting
 # R8 rename it — this is also the realistic rule shape a security team would use for a
 # sensitive class that must survive as its own type but should still be obfuscated.
--keep,allowobfuscation class com.rezacah.ngaburake.PaymentManager
+-keep,allowobfuscation class com.rezacah.ngaburake.data.fixture.PaymentManager
 
 # Same allowobfuscation treatment as PaymentManager above — keeps ApiKeyStore checkable as its
 # own type instead of being inlined away, while still letting R8 rename it.
 #
-# An earlier, deliberately overly broad `-keep class com.rezacah.ngaburake.ApiKeyStore { *; }`
+# An earlier, deliberately overly broad `-keep class ...ApiKeyStore { *; }`
 # rule was used here to manually validate that verifyObfuscation catches this exact violation;
 # it has been removed after that validation so this build stays green.
--keep,allowobfuscation class com.rezacah.ngaburake.ApiKeyStore
+-keep,allowobfuscation class com.rezacah.ngaburake.data.fixture.ApiKeyStore
+
+# keepclassmembers: keep the class's MEMBER NAMES while still letting R8 rename the class itself.
+# This simulates a realistic "loose rule" — the class name is obfuscated, but member names like
+# getApiKey / secretToken survive minification and leak information via reflection. This is
+# exactly what ReflectionChecker is designed to catch at runtime.
+-keepclassmembers class com.rezacah.ngaburake.data.fixture.ApiKeyStore { public *; }
+-keepclassmembers class com.rezacah.ngaburake.data.fixture.TokenStore { public *; }
+
+# Deliberately broad keep: LegacyAuthManager must NOT be renamed at all, so the runtime
+# ClassNameChecker mapping cross-check reports it as a CRITICAL violation (NotObfuscated).
+# Also prevents inlining. Note: this fixture intentionally creates a violation — the sample app
+# sets failOnViolation=false by default so the build stays green while the report demonstrates
+# detection. Run with -Pobfuscation.failOnViolation=true to demo the build gate failing.
+-keep class com.rezacah.ngaburake.data.fixture.LegacyAuthManager { *; }

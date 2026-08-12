@@ -8,6 +8,12 @@ import java.io.File
 
 class ObfuscationSDKTest {
 
+    /** Fixture with only a `doWork()` method — used to verify custom keyword matching. */
+    private class KeywordFixture {
+        @Suppress("unused")
+        fun doWork(): Boolean = true
+    }
+
     @Test
     fun `build without a sensitive package throws IllegalArgumentException`() {
         val exception = assertThrows<IllegalArgumentException> {
@@ -62,6 +68,23 @@ class ObfuscationSDKTest {
         val report = sdk.generateReport(result, ReportFormat.CONSOLE)
 
         assertThat(report).isNotEmpty()
+    }
+
+    @Test
+    fun `withSensitiveKeywords overrides the ReflectionChecker keyword list`() = runTest {
+        val defaultSdk = ObfuscationSDK.Builder()
+            .addSensitivePackage(KeywordFixture::class.java.name)
+            .build()
+        val customSdk = ObfuscationSDK.Builder()
+            .addSensitivePackage(KeywordFixture::class.java.name)
+            .withSensitiveKeywords(listOf("doWork"))
+            .build()
+
+        val defaultResult = defaultSdk.verify()
+        val customResult = customSdk.verify()
+
+        assertThat(defaultResult.findings.none { it.detail.contains("doWork") }).isTrue()
+        assertThat(customResult.findings.any { it.severity.toString() == "CRITICAL" }).isTrue()
     }
 
     private inline fun <reified T : Throwable> assertThrows(block: () -> Unit): T {

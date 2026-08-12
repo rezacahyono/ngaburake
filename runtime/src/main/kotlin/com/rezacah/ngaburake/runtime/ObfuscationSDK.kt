@@ -26,9 +26,13 @@ import java.io.File
 class ObfuscationSDK private constructor(
     private val sensitivePackages: List<String>,
     private val mappingIndex: MappingIndex?,
+    private val sensitiveKeywords: List<String>,
 ) {
     private val useCase = RuntimeCheckUseCase(
-        checkers = listOf(ClassNameChecker(mappingIndex), ReflectionChecker()),
+        checkers = listOf(
+            ClassNameChecker(mappingIndex),
+            ReflectionChecker(sensitiveKeywords),
+        ),
     )
 
     /**
@@ -54,6 +58,7 @@ class ObfuscationSDK private constructor(
     class Builder {
         private val sensitivePackages = mutableListOf<String>()
         private var mappingFile: File? = null
+        private var sensitiveKeywords: List<String> = ReflectionChecker.DEFAULT_KEYWORDS
 
         /** Adds a fully qualified class name that must be verified as obfuscated. */
         fun addSensitivePackage(className: String): Builder = apply { sensitivePackages.add(className) }
@@ -69,6 +74,17 @@ class ObfuscationSDK private constructor(
         fun withMappingFile(file: File): Builder = apply { mappingFile = file }
 
         /**
+         * Overrides the keywords [ReflectionChecker] flags in field/method names. Defaults to
+         * `apiKey`, `secret`, `token`, `password` (case-insensitive substring match).
+         *
+         * Call this if the consumer's naming convention uses different terms — e.g.
+         * `.withSensitiveKeywords(listOf("credential", "privateKey"))`.
+         */
+        fun withSensitiveKeywords(keywords: List<String>): Builder = apply {
+            sensitiveKeywords = keywords
+        }
+
+        /**
          * @throws IllegalArgumentException if no sensitive packages were configured — verifying
          *   nothing is almost always a configuration mistake, not an intentional no-op.
          */
@@ -77,7 +93,7 @@ class ObfuscationSDK private constructor(
                 "At least one sensitive package must be added via addSensitivePackage() before build()."
             }
             val index = mappingFile?.let { MappingParser.parse(it) }
-            return ObfuscationSDK(sensitivePackages.toList(), index)
+            return ObfuscationSDK(sensitivePackages.toList(), index, sensitiveKeywords)
         }
     }
 }

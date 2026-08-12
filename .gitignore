@@ -12,3 +12,5 @@ local.properties
 docs/
 .agents/
 AGENTS.md
+graphify-out/
+app/release/

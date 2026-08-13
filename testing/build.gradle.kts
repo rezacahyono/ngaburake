@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.rezacah.ngaburake"
-version = "0.1.0"
+version = "0.1.1"
 
 android {
     namespace = "com.rezacah.ngaburake.testing"
@@ -34,8 +34,8 @@ dependencies {
     // api, not implementation: FakeObfuscationChecker implements runtime's ObfuscationChecker,
     // so that type (and report's Finding/Severity it exposes) leaks through this module's public
     // API — consumers need compile-time access to both.
-    // project() dependency: resolvable locally before 0.1.1 is on Central; the published POM gets
-    // the Maven coordinates (com.rezacah.ngaburake:runtime:0.1.1) automatically via the
+    // project() dependency: resolvable locally before 0.1.2 is on Central; the published POM gets
+    // the Maven coordinates (com.rezacah.ngaburake:runtime:0.1.2) automatically via the
     // vanniktech plugin's project-dependency conversion.
     api(project(":runtime"))
     testImplementation(libs.junit)
@@ -44,7 +44,7 @@ dependencies {
 
 // Maven Central publishing config — see docs/PUBLISHING.md "Publishing to Maven Central" for
 // the full account/GPG/namespace setup this depends on. Publish runtime first — this module's
-// POM references runtime:0.1.1 by coordinate, and it isn't resolvable until it exists on Central.
+// POM references runtime:0.1.2 by coordinate, and it isn't resolvable until it exists on Central.
 mavenPublishing {
     configure(
         AndroidSingleVariantLibrary(

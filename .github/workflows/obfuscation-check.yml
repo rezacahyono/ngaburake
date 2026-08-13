@@ -1,0 +1,28 @@
+name: Obfuscation Check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  verify-obfuscation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build release APK and verify obfuscation (SARIF)
+        run: ./gradlew :app:assembleRelease -Pobfuscation.reportFormat=SARIF
+
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: app/build/reports/obfuscation-sample/report.sarif

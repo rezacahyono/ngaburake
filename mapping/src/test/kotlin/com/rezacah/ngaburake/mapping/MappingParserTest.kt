@@ -59,6 +59,25 @@ class MappingParserTest {
     }
 
     @Test
+    fun `header line with multiple arrows on the obfuscated side is not silently dropped`() {
+        // Not realistic for real R8 output (FQCNs can't contain "->"), but a hand-edited or
+        // corrupted mapping file could have this shape — split(limit = 2) must still parse it
+        // instead of silently skipping the line.
+        val file = mappingFile(
+            """
+            com.rezacah.ngaburake.PaymentManager -> a -> b:
+            """.trimIndent(),
+        )
+
+        val index = MappingParser.parse(file)
+
+        assertEquals(
+            ObfuscationCheckResult.Obfuscated,
+            index.check("com.rezacah.ngaburake.PaymentManager"),
+        )
+    }
+
+    @Test
     fun `indented member line is not treated as a new class header`() {
         val file = mappingFile(
             """

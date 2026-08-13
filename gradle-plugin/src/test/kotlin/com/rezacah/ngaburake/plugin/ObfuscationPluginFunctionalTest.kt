@@ -104,4 +104,49 @@ class ObfuscationPluginFunctionalTest {
         assertThat(result.task(":verifyObfuscation")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
         assertThat(result.output).contains("[FAIL] com.example.PaymentManager")
     }
+
+    @Test
+    fun `wildcard entry expands to every class under the package in mapping txt`() {
+        writeSettings()
+        writeBuildScript(
+            """
+            obfuscationVerify {
+                sensitivePackages.set(listOf("com.example.payment.*"))
+            }
+            """.trimIndent(),
+        )
+        writeMappingFile(
+            """
+            com.example.payment.PaymentManager -> a:
+            com.example.payment.Refund -> com.example.payment.Refund:
+            com.example.other.Unrelated -> b:
+            """.trimIndent(),
+        )
+
+        val result = runner("verifyObfuscation").build()
+
+        assertThat(result.task(":verifyObfuscation")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
+        assertThat(result.output).contains("[PASS] com.example.payment.PaymentManager")
+        assertThat(result.output).contains("[FAIL] com.example.payment.Refund")
+        assertThat(result.output).doesNotContain("com.example.other.Unrelated")
+    }
+
+    @Test
+    fun `wildcard entry matching nothing produces a WARN finding instead of silently doing nothing`() {
+        writeSettings()
+        writeBuildScript(
+            """
+            obfuscationVerify {
+                sensitivePackages.set(listOf("com.example.doesnotexist.*"))
+            }
+            """.trimIndent(),
+        )
+        writeMappingFile("com.example.other.Unrelated -> b:")
+
+        val result = runner("verifyObfuscation").build()
+
+        assertThat(result.task(":verifyObfuscation")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
+        assertThat(result.output).contains("[WARN] com.example.doesnotexist.*")
+        assertThat(result.output).contains("wildcard matched no classes")
+    }
 }

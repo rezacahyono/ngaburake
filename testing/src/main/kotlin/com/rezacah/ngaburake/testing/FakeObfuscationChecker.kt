@@ -11,7 +11,9 @@ import com.rezacah.ngaburake.runtime.ObfuscationChecker
  *
  * By default, returns [Severity.OK] for every class checked. Configure [findingsByClassName] to
  * return specific findings per class, or [defaultSeverity] to change the fallback for classes not
- * explicitly configured.
+ * explicitly configured. [type] defaults to [FindingType.CLASS_NAME] — override it to simulate a
+ * [FindingType.FIELD_NAME]/[FindingType.METHOD_NAME] finding, e.g. when testing code that
+ * branches on `finding.type`, not just `finding.severity`.
  *
  * Example:
  * ```
@@ -25,13 +27,14 @@ import com.rezacah.ngaburake.runtime.ObfuscationChecker
 class FakeObfuscationChecker(
     private val findingsByClassName: Map<String, Severity> = emptyMap(),
     private val defaultSeverity: Severity = Severity.OK,
+    private val type: FindingType = FindingType.CLASS_NAME,
 ) : ObfuscationChecker {
 
     override fun check(className: String): Finding {
         val severity = findingsByClassName[className] ?: defaultSeverity
         return Finding(
             target = className,
-            type = FindingType.CLASS_NAME,
+            type = type,
             severity = severity,
             detail = "fake result configured for test",
         )

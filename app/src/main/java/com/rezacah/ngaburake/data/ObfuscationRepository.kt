@@ -1,10 +1,12 @@
 package com.rezacah.ngaburake.data
 
 import android.content.Context
+import android.util.Log
 import com.rezacah.ngaburake.report.ReportFormat
 import com.rezacah.ngaburake.runtime.ObfuscationResult
 import com.rezacah.ngaburake.runtime.ObfuscationSDK
 import java.io.File
+import java.io.IOException
 
 /**
  * Data-layer seam between the UI layer and the [ObfuscationSDK]. The ViewModel depends on this
@@ -36,7 +38,7 @@ class ObfuscationRepositoryImpl(
     private val sdkFactory: (List<String>, File?, List<String>) -> ObfuscationSDK = { packages, mapping, keywords ->
         val builder = ObfuscationSDK.Builder()
             .withSensitiveKeywords(keywords)
-        packages.forEach(builder::addSensitivePackage)
+            .addSensitivePackages(packages)
         mapping?.let(builder::withMappingFile)
         builder.build()
     },
@@ -81,8 +83,13 @@ class ObfuscationRepositoryImpl(
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            Log.w(TAG, "Failed to read bundled mapping.txt asset", e)
             null
         }
+    }
+
+    private companion object {
+        const val TAG = "ObfuscationRepository"
     }
 }

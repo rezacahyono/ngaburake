@@ -12,6 +12,7 @@ object ReportGenerator {
             ReportFormat.CONSOLE -> ConsoleReportFormatter()
             ReportFormat.JSON -> JsonReportFormatter()
             ReportFormat.HTML -> HtmlReportFormatter()
+            ReportFormat.SARIF -> SarifReportFormatter()
         }
         return formatter.format(findings)
     }

@@ -51,11 +51,11 @@ val copyReleaseMappingToAssets = tasks.register<Copy>("copyReleaseMappingToAsset
 }
 
 // Same wiring pattern as ObfuscationPlugin.kt: mapping.txt isn't final until minify AND (if
-// Compose) the compose-mapping merge step both ran. Other tasks (mergeReleaseAssets,
-// lintVitalAnalyzeRelease, generateReleaseLintVitalReportModel) also read src/main/assets —
-// mustRunAfter tells Gradle the ordering is intentional, and as a side effect makes this
-// single-pass: those readers now run after the fresh mapping.txt is copied in, instead of
-// picking it up one build later.
+// Compose) the compose-mapping merge step both ran. Other tasks across *every* variant (not just
+// release — a plain `./gradlew build` also runs mergeDebugAssets/lintAnalyzeDebug/etc.) also read
+// src/main/assets — mustRunAfter tells Gradle the ordering is intentional, and as a side effect
+// makes this single-pass: those readers now run after the fresh mapping.txt is copied in,
+// instead of picking it up one build later.
 tasks.configureEach {
     val isMappingProducer = (name.startsWith("minify") && name.endsWith("WithR8")) ||
         (name.startsWith("merge") && name.endsWith("ComposeMapping"))
@@ -63,9 +63,8 @@ tasks.configureEach {
         finalizedBy(copyReleaseMappingToAssets)
         copyReleaseMappingToAssets.get().mustRunAfter(this)
     }
-    val readsAssetsBeforeCopy = name == "mergeReleaseAssets" ||
-        name == "lintVitalAnalyzeRelease" ||
-        name == "generateReleaseLintVitalReportModel"
+    val readsAssetsBeforeCopy = (name.startsWith("merge") && name.endsWith("Assets")) ||
+        name.contains("lint", ignoreCase = true)
     if (readsAssetsBeforeCopy) {
         mustRunAfter(copyReleaseMappingToAssets)
     }

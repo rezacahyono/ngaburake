@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.rezacah.ngaburake"
-version = "0.1.1"
+version = "0.1.2"
 
 android {
     namespace = "com.rezacah.ngaburake.runtime"
@@ -38,7 +38,7 @@ dependencies {
     api("com.rezacah.ngaburake:report:0.1.0")
     // implementation is correct here: MappingIndex/MappingParser never leak past the private
     // ObfuscationSDK constructor — Builder.withMappingFile() only takes a plain java.io.File.
-    implementation("com.rezacah.ngaburake:mapping:0.1.0")
+    implementation("com.rezacah.ngaburake:mapping:0.1.1")
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)
     testImplementation(libs.truth)

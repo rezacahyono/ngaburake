@@ -19,4 +19,15 @@ class MappingIndex(private val entries: List<MappingEntry>) {
             ObfuscationCheckResult.NotObfuscated
         }
     }
+
+    /**
+     * Every original class name in this mapping that belongs to [packagePrefix] — used to expand
+     * a `"com.foo.payment.*"`-style wildcard entry into concrete class names.
+     *
+     * Boundary-aware: `"com.foo.payment"` matches `"com.foo.payment.Foo"` but not
+     * `"com.foo.paymentXyz.Foo"` — the prefix is matched against `"$packagePrefix."`, not a plain
+     * substring. Result is sorted alphabetically for deterministic report output.
+     */
+    fun classesUnder(packagePrefix: String): List<String> =
+        byOriginalName.keys.filter { it.startsWith("$packagePrefix.") }.sorted()
 }

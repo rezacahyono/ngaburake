@@ -23,7 +23,7 @@ kotlin {
 // during the initial manual review — a fixed TXT record isn't known ahead of time, the
 // reviewer provides it by email when needed.
 group = "com.rezacah.ngaburake"
-version = "0.1.0"
+version = "0.1.1"
 
 gradlePlugin {
     website = "https://github.com/rezacahyono/ngaburake"
@@ -54,7 +54,7 @@ gradlePlugin {
 
 dependencies {
     implementation("com.rezacah.ngaburake:report:0.1.0")
-    implementation("com.rezacah.ngaburake:mapping:0.1.0")
+    implementation("com.rezacah.ngaburake:mapping:0.1.1")
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.mockk)

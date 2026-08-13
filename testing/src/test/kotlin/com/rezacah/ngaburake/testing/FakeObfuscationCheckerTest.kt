@@ -1,6 +1,7 @@
 package com.rezacah.ngaburake.testing
 
 import com.google.common.truth.Truth.assertThat
+import com.rezacah.ngaburake.report.FindingType
 import com.rezacah.ngaburake.report.Severity
 import org.junit.Test
 
@@ -13,6 +14,24 @@ class FakeObfuscationCheckerTest {
         val finding = fake.check("com.example.AnyClass")
 
         assertThat(finding.severity).isEqualTo(Severity.OK)
+    }
+
+    @Test
+    fun `default type is CLASS_NAME`() {
+        val fake = FakeObfuscationChecker()
+
+        val finding = fake.check("com.example.AnyClass")
+
+        assertThat(finding.type).isEqualTo(FindingType.CLASS_NAME)
+    }
+
+    @Test
+    fun `custom type overrides the default CLASS_NAME`() {
+        val fake = FakeObfuscationChecker(type = FindingType.METHOD_NAME)
+
+        val finding = fake.check("com.example.ApiKeyStore")
+
+        assertThat(finding.type).isEqualTo(FindingType.METHOD_NAME)
     }
 
     @Test

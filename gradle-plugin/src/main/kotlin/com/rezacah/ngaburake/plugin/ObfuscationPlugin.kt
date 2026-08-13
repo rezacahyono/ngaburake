@@ -33,6 +33,16 @@ class ObfuscationPlugin : Plugin<Project> {
             task.mappingFile.set(
                 project.layout.buildDirectory.file("outputs/mapping/release/mapping.txt"),
             )
+            // Best-effort source lookup for SARIF physicalLocation — conventional Android/Kotlin
+            // source dirs, not derived from the actual sourceSets config (no line-number-table
+            // access either way, so precision doesn't get better by going deeper here).
+            task.sourceRoots.set(
+                listOf(
+                    project.file("src/main/kotlin"),
+                    project.file("src/main/java"),
+                ),
+            )
+            task.rootDir.set(project.rootDir)
             task.sensitivePackages.set(extension.sensitivePackages)
             task.failOnViolation.set(extension.failOnViolation)
             task.reportFormat.set(extension.reportFormat)

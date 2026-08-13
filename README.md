@@ -18,8 +18,7 @@ for what's available where.
 - [x] Fail-on-violation build gate
 - [x] Runtime SDK (`ObfuscationSDK`) — class name + reflection field/method check
 - [x] Consumer testing fake (`FakeObfuscationChecker`)
-- [ ] SARIF export (CI code scanning) — planned v1.2
-- [ ] Historical trend dashboard — exploratory, not yet designed
+- [x] SARIF export (CI code scanning) — see [CI integration](#ci-integration)
 
 ## Use cases
 
@@ -81,7 +80,7 @@ your module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.rezacah.ngaburake:runtime:0.1.1")
+    implementation("com.rezacah.ngaburake:runtime:0.1.2")
 }
 ```
 
@@ -93,7 +92,7 @@ stays an implementation detail you never reference directly.
 For consumer unit tests, add the fake checker:
 
 ```kotlin
-testImplementation("com.rezacah.ngaburake:testing:0.1.0")
+testImplementation("com.rezacah.ngaburake:testing:0.1.1")
 ```
 
 ## Published packages
@@ -101,10 +100,10 @@ testImplementation("com.rezacah.ngaburake:testing:0.1.0")
 | Package | Version | Registry | Purpose |
 |---|---|---|---|
 | `com.rezacah.ngaburake.obfuscation-verify` | [0.1.0](https://plugins.gradle.org/plugin/com.rezacah.ngaburake.obfuscation-verify) | [Gradle Plugin Portal](https://plugins.gradle.org) | Build-time `verifyObfuscation` task |
-| [`com.rezacah.ngaburake:runtime`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/runtime) | 0.1.1 | Maven Central | In-app `ObfuscationSDK` |
-| [`com.rezacah.ngaburake:report`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/report) | 0.1.0 | Maven Central | Console/JSON/HTML report generation |
-| [`com.rezacah.ngaburake:mapping`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/mapping) | 0.1.0 | Maven Central | R8 `mapping.txt` parser |
-| [`com.rezacah.ngaburake:testing`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/testing) | 0.1.0 | Maven Central | `FakeObfuscationChecker` test fake |
+| [`com.rezacah.ngaburake:runtime`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/runtime) | 0.1.2 | Maven Central | In-app `ObfuscationSDK` |
+| [`com.rezacah.ngaburake:report`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/report) | 0.1.0 | Maven Central | Console/JSON/HTML/SARIF report generation |
+| [`com.rezacah.ngaburake:mapping`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/mapping) | 0.1.1 | Maven Central | R8 `mapping.txt` parser, package-prefix lookup |
+| [`com.rezacah.ngaburake:testing`](https://central.sonatype.com/artifact/com.rezacah.ngaburake/testing) | 0.1.1 | Maven Central | `FakeObfuscationChecker` test fake |
 
 `report`, `mapping`, and `testing` come in transitively through `runtime` (or are used directly
 when needed). Latest versions are always shown by the badges at the top of this file.
@@ -123,10 +122,33 @@ obfuscationVerify {
 
 | Property | Default | Description |
 |---|---|---|
-| `sensitivePackages` | `[]` | Fully qualified class names that must appear renamed in the R8 mapping file. |
+| `sensitivePackages` | `[]` | Fully qualified class names that must appear renamed in the R8 mapping file. A `"com.example.payment.*"`-style entry (ending in `.*`) is a package-prefix wildcard, expanded into every class under that package found in the mapping file — see [wildcards](#package-prefix-wildcards). |
 | `failOnViolation` | `false` | Fail the build when a class was found in the mapping but kept its original name. |
-| `reportFormat` | `ReportFormat.CONSOLE` | `CONSOLE`, `JSON`, or `HTML`. |
+| `reportFormat` | `ReportFormat.CONSOLE` | `CONSOLE`, `JSON`, `HTML`, or `SARIF`. |
 | `outputDir` | `build/reports/obfuscation` | Directory where the report file is written. |
+
+## Package-prefix wildcards
+
+Listing every sensitive class one at a time gets unwieldy for a package with many of them. An
+entry ending in `.*` is treated as a package-prefix wildcard instead of a literal class name —
+safe to detect this way because `*` is never a valid identifier character, so no real class name
+can end with it:
+
+```kotlin
+obfuscationVerify {
+    sensitivePackages.set(listOf("com.rezacah.ngaburake.payment.*"))
+}
+```
+
+This expands, at `verifyObfuscation` time, into every class under `com.rezacah.ngaburake.payment`
+that appears in `mapping.txt` (boundary-aware — it won't also match a sibling package like
+`com.rezacah.ngaburake.paymentLegacy`). If the wildcard matches nothing, that's reported as a
+single `WARNING` finding for the pattern itself, not silently ignored.
+
+The runtime SDK (`ObfuscationSDK.Builder`) supports the same `.*` convention, but **requires**
+`withMappingFile()` — expanding a wildcard means enumerating classes from a real mapping file;
+the reflection-only heuristic has no way to do that. Calling `build()` with a wildcard entry and
+no mapping file throws `IllegalArgumentException`.
 
 ## Usage
 
@@ -174,6 +196,37 @@ either.
 HTML format (`reportFormat.set(ReportFormat.HTML)`) renders a standalone page with a color-coded
 table — one row per finding, `ok`/`warning`/`critical` CSS classes for styling.
 
+SARIF format (`reportFormat.set(ReportFormat.SARIF)`) emits a
+[SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) log for upload to
+GitHub/GitLab code scanning — see [CI integration](#ci-integration). Every severity is included
+(`Severity.OK` maps to SARIF level `note`, not excluded), so the log reflects the complete set of
+what was checked, not just violations. When a sensitive class's source file can be found under a
+conventional `src/main/kotlin`/`src/main/java` root, the finding gets a `physicalLocation`
+pointing at that file (line number is a best-effort `1`, not derived from bytecode debug info —
+treat it as "somewhere in this file"); otherwise it falls back to a `logicalLocation` keyed by the
+fully qualified class name.
+
+## CI integration
+
+`.github/workflows/obfuscation-check.yml` runs on every pull request: builds the sample app,
+generates a SARIF report, and uploads it to GitHub code scanning via
+`github/codeql-action/upload-sarif`. Findings then show up natively in the repo's **Security**
+tab — including history across commits/PRs (new findings, resolved findings) without ngaburake
+needing to build a dashboard for it.
+
+```yaml
+- name: Verify obfuscation (SARIF)
+  run: ./gradlew :app:assembleRelease -Pobfuscation.reportFormat=SARIF
+
+- name: Upload SARIF to code scanning
+  if: always()
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: app/build/reports/obfuscation-sample/report.sarif
+```
+
+`permissions: security-events: write` is required for `upload-sarif` to write to the Security tab.
+
 ## A note on trivial classes
 
 If a sensitive class is small enough (one constructor, one trivial method, one call site), R8
@@ -198,10 +251,10 @@ import com.rezacah.ngaburake.report.ReportFormat
 class MyQaBuildCheck {
     suspend fun runCheck() {
         val sdk = ObfuscationSDK.Builder()
-            .addSensitivePackage("com.myapp.PaymentManager")
-            .addSensitivePackage("com.myapp.ApiKeyStore")
+            .addSensitivePackages(listOf("com.myapp.PaymentManager", "com.myapp.ApiKeyStore"))
             // Optional: cross-check against a real mapping.txt if you bundle one
-            // (e.g. as an asset in a dedicated CI/QA build variant).
+            // (e.g. as an asset in a dedicated CI/QA build variant). Required if any
+            // sensitivePackage uses the "com.myapp.payment.*" wildcard convention.
             // .withMappingFile(File(context.filesDir, "mapping.txt"))
             .build()
 
@@ -243,7 +296,7 @@ The `:app` module doubles as a live sample that demonstrates the whole SDK:
 **Build-time (Gradle plugin)**
 - `./gradlew :app:assembleRelease` runs `verifyObfuscation` automatically after R8. The report
   lands in `app/build/reports/obfuscation-sample/`.
-- Switch report format: `-Pobfuscation.reportFormat={CONSOLE|JSON|HTML}` (default `HTML`).
+- Switch report format: `-Pobfuscation.reportFormat={CONSOLE|JSON|HTML|SARIF}` (default `HTML`).
 - Demo the CI security gate: `-Pobfuscation.failOnViolation=true` fails the build because
   `LegacyAuthManager` is deliberately kept by a broad `-keep` rule (default is `false`, so the
   build stays green while the report still flags it).
@@ -260,7 +313,7 @@ The `:app` module doubles as a live sample that demonstrates the whole SDK:
   current after a single `./gradlew :app:assembleRelease`.
 - Toggle **custom keywords** — `withSensitiveKeywords(listOf("legacy"))` replaces the defaults.
 - Add/remove sensitive classes at runtime (shows `addSensitivePackage()` is dynamic).
-- Render the report in **all three formats** (Console / JSON / HTML) via `generateReport()`.
+- Render the report in **all four formats** (Console / JSON / HTML / SARIF) via `generateReport()`.
 
 ## Development
 

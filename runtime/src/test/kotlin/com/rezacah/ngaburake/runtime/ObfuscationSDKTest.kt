@@ -71,6 +71,98 @@ class ObfuscationSDKTest {
     }
 
     @Test
+    fun `addSensitivePackages adds every class in the list`() = runTest {
+        val sdk = ObfuscationSDK.Builder()
+            .addSensitivePackages(
+                listOf(ObfuscationSDKTest::class.java.name, KeywordFixture::class.java.name),
+            )
+            .build()
+
+        val result = sdk.verify()
+
+        // 2 classes * 2 checkers (ClassNameChecker + ReflectionChecker) = 4 findings.
+        assertThat(result.findings).hasSize(4)
+    }
+
+    @Test
+    fun `addSensitivePackages can be mixed with addSensitivePackage`() = runTest {
+        val sdk = ObfuscationSDK.Builder()
+            .addSensitivePackages(listOf(ObfuscationSDKTest::class.java.name))
+            .addSensitivePackage(KeywordFixture::class.java.name)
+            .build()
+
+        val result = sdk.verify()
+
+        assertThat(result.findings).hasSize(4)
+    }
+
+    @Test
+    fun `duplicate sensitive packages are deduplicated`() = runTest {
+        val sdk = ObfuscationSDK.Builder()
+            .addSensitivePackage("com.example.PaymentManager")
+            .addSensitivePackage("com.example.PaymentManager")
+            .build()
+
+        val result = sdk.verify()
+
+        // 1 distinct class * 2 checkers = 2 findings, not 4.
+        assertThat(result.findings).hasSize(2)
+    }
+
+    @Test
+    fun `wildcard entry expands to every class under the package via the mapping file`() = runTest {
+        val mappingFile = File.createTempFile("mapping", ".txt").apply {
+            writeText(
+                """
+                com.example.payment.PaymentManager -> a:
+                com.example.payment.Refund -> com.example.payment.Refund:
+                com.example.other.Unrelated -> b:
+                """.trimIndent(),
+            )
+        }
+        val sdk = ObfuscationSDK.Builder()
+            .addSensitivePackage("com.example.payment.*")
+            .withMappingFile(mappingFile)
+            .build()
+
+        val result = sdk.verify()
+
+        assertThat(result.findings.map { it.target }).containsAtLeast(
+            "com.example.payment.PaymentManager",
+            "com.example.payment.Refund",
+        )
+        assertThat(result.findings.none { it.target == "com.example.other.Unrelated" }).isTrue()
+    }
+
+    @Test
+    fun `wildcard entry matching nothing produces a WARNING finding instead of being dropped`() = runTest {
+        val mappingFile = File.createTempFile("mapping", ".txt").apply {
+            writeText("com.example.other.Unrelated -> b:")
+        }
+        val sdk = ObfuscationSDK.Builder()
+            .addSensitivePackage("com.example.doesnotexist.*")
+            .withMappingFile(mappingFile)
+            .build()
+
+        val result = sdk.verify()
+
+        val finding = result.findings.single()
+        assertThat(finding.target).isEqualTo("com.example.doesnotexist.*")
+        assertThat(finding.severity.toString()).isEqualTo("WARNING")
+        assertThat(finding.detail).contains("wildcard matched no classes")
+    }
+
+    @Test
+    fun `wildcard entry without withMappingFile throws IllegalArgumentException`() {
+        val exception = assertThrows<IllegalArgumentException> {
+            ObfuscationSDK.Builder()
+                .addSensitivePackage("com.example.payment.*")
+                .build()
+        }
+        assertThat(exception.message).contains("withMappingFile")
+    }
+
+    @Test
     fun `withSensitiveKeywords overrides the ReflectionChecker keyword list`() = runTest {
         val defaultSdk = ObfuscationSDK.Builder()
             .addSensitivePackage(KeywordFixture::class.java.name)

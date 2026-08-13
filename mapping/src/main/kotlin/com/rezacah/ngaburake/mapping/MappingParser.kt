@@ -15,10 +15,15 @@ object MappingParser {
         val entries = mutableListOf<MappingEntry>()
         mappingFile.forEachLine { line ->
             if (!line.startsWith(" ") && line.contains("->")) {
-                val parts = line.split("->").map { it.trim().removeSuffix(":") }
-                if (parts.size == 2) {
-                    entries.add(MappingEntry(original = parts[0], obfuscated = parts[1]))
-                }
+                // limit = 2: only the first "->" is the header separator. A FQCN can never
+                // literally contain "->" (not a valid identifier character), but splitting
+                // without a limit would still silently drop a line if the obfuscated side ever
+                // did (e.g. a hand-edited or corrupted mapping file) — split(limit = 2) makes
+                // parts.size == 2 guaranteed whenever contains("->") is true, so there's no
+                // silent-drop case left to guard against.
+                val (original, obfuscated) = line.split("->", limit = 2)
+                    .map { it.trim().removeSuffix(":") }
+                entries.add(MappingEntry(original = original, obfuscated = obfuscated))
             }
         }
         return MappingIndex(entries)

@@ -14,7 +14,10 @@ internal class SarifReportFormatter : ReportFormatter {
     // encodeDefaults: SarifLog.schema/version and SarifDriver.name/informationUri all have
     // default values (they're fixed for this tool) — kotlinx.serialization skips default values
     // by default, which would silently drop $schema/version from the output entirely.
-    private val json = Json { prettyPrint = true; encodeDefaults = true }
+    // explicitNulls = false: SarifLocation.logicalLocations/physicalLocation are nullable with a
+    // null default — encodeDefaults alone would emit `"logicalLocations": null`, which the SARIF
+    // 2.1.0 schema rejects (GitHub code scanning: "logicalLocations is not of a type(s) array").
+    private val json = Json { prettyPrint = true; encodeDefaults = true; explicitNulls = false }
 
     override fun format(findings: List<Finding>): String {
         val rules = findings.map { it.type }.distinct().map { type -> ruleFor(type) }

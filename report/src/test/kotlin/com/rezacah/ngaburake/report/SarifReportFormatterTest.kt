@@ -39,6 +39,31 @@ class SarifReportFormatterTest {
     }
 
     @Test
+    fun `nullable location fields are omitted instead of emitted as null`() {
+        val findingWithoutPath = Finding(
+            target = "com.rezacah.ngaburake.ApiKeyStore",
+            type = FindingType.CLASS_NAME,
+            severity = Severity.CRITICAL,
+            detail = "kept its original name",
+        )
+        val findingWithPath = findingWithoutPath.copy(
+            filePath = "src/main/kotlin/com/rezacah/ngaburake/ApiKeyStore.kt",
+            line = 12,
+        )
+
+        val output = ReportGenerator.generate(
+            listOf(findingWithoutPath, findingWithPath),
+            ReportFormat.SARIF,
+        )
+
+        // The SARIF 2.1.0 schema requires logicalLocations to be an array when present, so an
+        // emitted `"logicalLocations": null` (which encodeDefaults = true would otherwise
+        // produce) makes the whole log unparseable to GitHub code scanning.
+        assertTrue(!output.contains("\"logicalLocations\": null"))
+        assertTrue(!output.contains("\"physicalLocation\": null"))
+    }
+
+    @Test
     fun `declares one rule per distinct finding type`() {
         val findings = listOf(
             Finding("a", FindingType.CLASS_NAME, Severity.OK, "d"),

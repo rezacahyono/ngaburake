@@ -220,7 +220,7 @@ needing to build a dashboard for it.
 
 - name: Upload SARIF to code scanning
   if: always()
-  uses: github/codeql-action/upload-sarif@v3
+  uses: github/codeql-action/upload-sarif@v4
   with:
     sarif_file: app/build/reports/obfuscation-sample/report.sarif
 ```
